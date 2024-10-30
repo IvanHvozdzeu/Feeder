@@ -1,0 +1,61 @@
+class StepperMotor
+{
+  public:
+  int motorSpeed = 1200;
+    ////////////////// Инициализация пинов для моторчика
+    void setMotorPins(int pin1, int pin2, int pin3, int pin4)
+    {
+      int motorPin1 = pin1;    // Blue   - 28BYJ48 pin 1
+      int motorPin2 = pin2;    // Pink   - 28BYJ48 pin 2
+      int motorPin3 = pin3;    // Yellow - 28BYJ48 pin 3
+      int motorPin4 = pin4;    // Orange - 28BYJ48 pin 4
+    }
+    /////////////////////////// Вибрационный ход моторчика где right - шаги по часовой а left - против. Необходим для того что бы еда не застрявала в шнеке.
+    void vibroMovement (int right,int left)
+    {
+      for(int i=0;i<=(right+left);i++)
+      {
+        if (i<=right)
+        {
+          clockwise(motorSpeed);
+        }
+        else
+        { 
+          anticlockwise(motorSpeed);
+        };
+      };
+    };
+    ////////////////////// Ход моторчика по часовой стрелке
+    void clockwise()
+    {
+      for(int i = 0; i < 8; i++)
+      {
+        setOutput(i);
+        delayMicroseconds(motorSpeed);
+      }
+    }
+    //////////////////// Ход моторчика против часовой стрелки
+    void anticlockwise()
+    {
+      for(int i = 7; i >= 0; i--)
+      {
+        setOutput(i);
+        delayMicroseconds(motorSpeed);
+      }
+    }
+  private:
+    int motorPin1 = 0;    // Blue   - 28BYJ48 pin 1
+    int motorPin2 = 0;    // Pink   - 28BYJ48 pin 2
+    int motorPin3 = 0;    // Yellow - 28BYJ48 pin 3
+    int motorPin4 = 0;    // Orange - 28BYJ48 pin 4
+    int lookup[8] = {B01000, B01100, B00100, B00110, B00010, B00011, B00001, B01001}; /////////Массив со значениями (8,12,4,6,2,3,1,9) связан с драйвером и запитывает пины поочередно
+    //////////////////// Отработка по пинам для вращения моторчика по кругу. Значение out задействует 1 из 8 положений драйвера.
+    void setOutput(int out)
+    {
+      digitalWrite(motorPin1, bitRead(lookup[out], 0));
+      digitalWrite(motorPin2, bitRead(lookup[out], 1));
+      digitalWrite(motorPin3, bitRead(lookup[out], 2));
+      digitalWrite(motorPin4, bitRead(lookup[out], 3));
+    }
+
+  };
