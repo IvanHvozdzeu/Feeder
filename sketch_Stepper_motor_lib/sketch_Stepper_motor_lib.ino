@@ -1,11 +1,11 @@
 #include "StepperMotor.h"
-
+StepperMotor motor(8,9,10,11);
 void setup()
 {
   Serial.begin(9600);
-  StepperMotor.setMotorPins(8,9,10,11);
+  
 };
 void loop()
 {
-  StepperMotor.clockwise();
+  motor.clockwise();
 };
