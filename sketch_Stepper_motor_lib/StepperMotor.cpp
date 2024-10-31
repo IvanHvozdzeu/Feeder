@@ -17,11 +17,11 @@
       {
         if (i<=right)
         {
-          clockwise(motorSpeed);
+          clockwise();
         }
         else
         { 
-          anticlockwise(motorSpeed);
+          anticlockwise();
         }
       }
     }
