@@ -5,10 +5,10 @@
       pinMode(pin2, OUTPUT);
       pinMode(pin3, OUTPUT);
       pinMode(pin4, OUTPUT);
-      int _motorPin1 = pin1;    // Blue   - 28BYJ48 pin 1
-      int _motorPin2 = pin2;    // Pink   - 28BYJ48 pin 2
-      int _motorPin3 = pin3;    // Yellow - 28BYJ48 pin 3
-      int _motorPin4 = pin4;    // Orange - 28BYJ48 pin 4
+      _motorPin1 = pin1;    // Blue   - 28BYJ48 pin 1
+      _motorPin2 = pin2;    // Pink   - 28BYJ48 pin 2
+      _motorPin3 = pin3;    // Yellow - 28BYJ48 pin 3
+      _motorPin4 = pin4;    // Orange - 28BYJ48 pin 4
     }
     /////////////////////////// Вибрационный ход моторчика где right - шаги по часовой а left - против. Необходим для того что бы еда не застрявала в шнеке.
     void StepperMotor::vibroMovement (int right,int left)
