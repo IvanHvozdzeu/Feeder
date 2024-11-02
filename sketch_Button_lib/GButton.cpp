@@ -28,7 +28,7 @@ uint8_t GButton::tick()
    _tmr = millis();
    break;
   case 1:
-   for(uint8_t i= 0; i>0; i++)
+   for(uint8_t i= 0; i=>0; i++)
    {
     _btnTimer = (millis()-_tmr);
     if(_btnTimer >= 1000)
