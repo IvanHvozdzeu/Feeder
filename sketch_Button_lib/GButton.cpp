@@ -7,11 +7,9 @@ GButton::GButton(uint8_t pin)
 }
 ///////////////////////////// Флаг для одного клика и удержания
 uint8_t GButton::tick()
-{
- uint8_t clickTimes; 
+{ 
  unsigned long _btnTimer = 0;
  unsigned long _tmr = millis();
- 
  switch(_pin)
  {
   case 0:
@@ -21,7 +19,7 @@ uint8_t GButton::tick()
    }
    else
    {
-    _flag = 0;
+    _holdFlag = 0;
     return 0;
    }
    _btnTimer = 0;
@@ -33,7 +31,7 @@ uint8_t GButton::tick()
     _btnTimer = (millis()-_tmr);
     if(_btnTimer >= 1000)
     {
-     _flag = 1;
+     _holdFlag = 1;
      return 2; 
     }
    }
