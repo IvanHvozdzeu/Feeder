@@ -19,8 +19,8 @@ class StepperMotor
    uint8_t _motorPin2;    
    uint8_t _motorPin3;    
    uint8_t _motorPin4;    
-   uint8_t _lookup[8] = {B01000, B01100, B00100, B00110, B00010, B00011, B00001, B01001};
-   uint8_t _lookupI;
+   uint8_t _step[8] = {B01000, B01100, B00100, B00110, B00010, B00011, B00001, B01001};
+   uint8_t _stepPos;
    uint8_t vibroSteps;    
   };
 
