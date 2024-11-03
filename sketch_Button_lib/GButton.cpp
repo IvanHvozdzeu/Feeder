@@ -6,35 +6,43 @@ GButton::GButton(uint8_t pin)
  _pin=pin;
 }
 ///////////////////////////// Флаг для одного клика и удержания
-uint8_t GButton::tick()
-{ 
- unsigned long _btnTimer = 0;
- unsigned long _tmr = millis();
- switch(_pin)
+uint8_t GButton::click()
+{
+ switch(digitalRead(_pin))
  {
   case 0:
-   if(1000 > _btnTimer > 0 )
+   if(!_pressFlag && _holdFlag && millis() - _btnTimer > 100 )
    {
-    return 1;
+    _btnTimer = millis();
+    _holdFlag = false;
+   }
+   if(_pressFlag && _holdFlag)
+   {
+    _btnTimer = millis();
+    _pressFlag = false;
+    Serial.println("Нажатие");
    }
    else
    {
-    _holdFlag = 0;
     return 0;
    }
-   _btnTimer = 0;
-   _tmr = millis();
    break;
   case 1:
-   for(uint8_t i= 0; i=>0; i++)
+   if(!_holdFlag && millis() - _btnTimer > 100 )
    {
-    _btnTimer = (millis()-_tmr);
-    if(_btnTimer >= 1000)
-    {
-     _holdFlag = 1;
-     return 2; 
-    }
+    //Serial.println("Нажатие");
+    _btnTimer = millis();
+    _holdFlag = true;
+    _pressFlag = true;
+    return 1;
    }
+   if(_holdFlag && millis() - _btnTimer > 1000 )
+   {
+    Serial.println("Удержание");
+    _btnTimer = millis();
+    _pressFlag = false;
+    return 2;
+   } 
    break;
  }
 }
