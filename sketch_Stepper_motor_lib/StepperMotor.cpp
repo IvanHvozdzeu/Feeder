@@ -1,50 +1,93 @@
+    #include "Arduino.h"
     #include "StepperMotor.h"
-    StepperMotor::StepperMotor(int pin1, int pin2, int pin3, int pin4)
+
+    StepperMotor::StepperMotor(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
     {
       pinMode(pin1, OUTPUT);
       pinMode(pin2, OUTPUT);
       pinMode(pin3, OUTPUT);
       pinMode(pin4, OUTPUT);
-      _motorPin1 = pin1;    // Blue   - 28BYJ48 pin 1
-      _motorPin2 = pin2;    // Pink   - 28BYJ48 pin 2
-      _motorPin3 = pin3;    // Yellow - 28BYJ48 pin 3
-      _motorPin4 = pin4;    // Orange - 28BYJ48 pin 4
+      _motorPin1 = pin1;    
+      _motorPin2 = pin2;    
+      _motorPin3 = pin3;    
+      _motorPin4 = pin4;    
     }
     /////////////////////////// Вибрационный ход моторчика где right - шаги по часовой а left - против. Необходим для того что бы еда не застрявала в шнеке.
-    void StepperMotor::vibroMovement (int right,int left)
+    void StepperMotor::vibroMovement (uint8_t right,uint8_t left)
     {
-      for(int i=0;i<=(right+left);i++)
-      {
-        if (i<=right)
+     if(micros() - _clcTimer > motorSpeed)
+     {
+        if (vibroSteps < right)
         {
-          clockwise();
+          _clcTimer = micros();
+          vibroSteps ++;
+          _lookupI ++;
+          //Serial.println (vibroSteps);
+          if(_lookupI > 7)
+          {
+            _lookupI = 0;
+          }
+          //Serial.println (_lookupI);
+          _setOutput(_lookupI);
         }
-        else
-        { 
-          anticlockwise();
+     }
+     if(micros() - _clcTimer > motorSpeed)
+     {
+        if (right <= vibroSteps)
+        {
+          _clcTimer = micros();
+          _lookupI --;
+          if(_lookupI < 0)
+          {
+           _lookupI = 7;
+          }
+          vibroSteps ++;
+          _setOutput(_lookupI);
+          //Serial.println (_lookupI);
+          //Serial.println (vibroSteps);
+          
+          
         }
+        if(vibroSteps == right+left)
+          {
+            vibroSteps = 0;
+          }
       }
     }
     ////////////////////// Ход моторчика по часовой стрелке
     void StepperMotor::clockwise()
-    {
-      for(int i = 0; i < 8; i++)
+    { 
+     if(micros() - _clcTimer > motorSpeed)
+     {
+      _clcTimer = micros();
+      if(_lookupI == 8)
       {
-        setOutput(i);
-        delayMicroseconds(motorSpeed);
+       _lookupI = 0;
       }
+      //Serial.println (_lookupI);
+      _setOutput(_lookupI);
+      _lookupI = _lookupI + 1;   
+     } 
     }
     //////////////////// Ход моторчика против часовой стрелки
     void StepperMotor::anticlockwise()
     {
-      for(int i = 7; i >= 0; i--)
-      {
-        setOutput(i);
-        delayMicroseconds(motorSpeed);
-      }
+      
+        if(micros() - _clcTimer > motorSpeed)
+        {
+         _clcTimer = micros();
+         
+        _lookupI = _lookupI - 1;
+        if(_lookupI < 0)
+         {
+          _lookupI = 7;
+         }   
+        _setOutput(_lookupI);
+        //Serial.println (_lookupI);
+        }
     }
-    //////////////////// Отработка по пинам для вращения моторчика по кругу. Значение out задействует 1 из 8 полушагов.
-    void StepperMotor::setOutput(int out)
+    //////////////////// Отработка по пинам для вращения моторчика по кругу. Значение out задействует 1 из 8 положений драйвера.
+    void StepperMotor::_setOutput(uint8_t out)
     {
       digitalWrite(_motorPin1, bitRead(_lookup[out], 0));
       digitalWrite(_motorPin2, bitRead(_lookup[out], 1));
