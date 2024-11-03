@@ -9,9 +9,9 @@ class GButton
    
   private:
    bool doubleClick();
-   uint8_t tick();
-   bool _holdFlag;
+   uint8_t click();
    uint8_t _pin;
-   unsigned long _tmr = millis();
-   unsigned long _btnTimer = 0;
+   bool _holdFlag;
+   bool _pressFlag;
+   uint32_t _btnTimer;
 };
