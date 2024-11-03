@@ -1,4 +1,4 @@
-    #include "Arduino.h"
+#include "Arduino.h"
     #include "StepperMotor.h"
 
     StepperMotor::StepperMotor(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
@@ -21,14 +21,14 @@
         {
           _clcTimer = micros();
           vibroSteps ++;
-          _lookupI ++;
+          _stepPos ++;
           //Serial.println (vibroSteps);
-          if(_lookupI > 7)
+          if(_stepPos > 7)
           {
-            _lookupI = 0;
+            _stepPos = 0;
           }
           //Serial.println (_lookupI);
-          _setOutput(_lookupI);
+          _setOutput(_stepPos);
         }
      }
      if(micros() - _clcTimer > motorSpeed)
@@ -36,13 +36,13 @@
         if (right <= vibroSteps)
         {
           _clcTimer = micros();
-          _lookupI --;
-          if(_lookupI < 0)
+          _stepPos --;
+          if(_stepPos < 0)
           {
-           _lookupI = 7;
+           _stepPos = 7;
           }
           vibroSteps ++;
-          _setOutput(_lookupI);
+          _setOutput(_stepPos);
           //Serial.println (_lookupI);
           //Serial.println (vibroSteps);
           
@@ -60,13 +60,13 @@
      if(micros() - _clcTimer > motorSpeed)
      {
       _clcTimer = micros();
-      if(_lookupI == 8)
+      if(_stepPos == 8)
       {
-       _lookupI = 0;
+       _stepPos = 0;
       }
       //Serial.println (_lookupI);
-      _setOutput(_lookupI);
-      _lookupI = _lookupI + 1;   
+      _setOutput(_stepPos);
+      _stepPos = _stepPos + 1;   
      } 
     }
     //////////////////// Ход моторчика против часовой стрелки
@@ -77,20 +77,20 @@
         {
          _clcTimer = micros();
          
-        _lookupI = _lookupI - 1;
-        if(_lookupI < 0)
+        _stepPos = _stepPos - 1;
+        if(_stepPos < 0)
          {
-          _lookupI = 7;
+          _stepPos = 7;
          }   
-        _setOutput(_lookupI);
+        _setOutput(_stepPos);
         //Serial.println (_lookupI);
         }
     }
     //////////////////// Отработка по пинам для вращения моторчика по кругу. Значение out задействует 1 из 8 положений драйвера.
     void StepperMotor::_setOutput(uint8_t out)
     {
-      digitalWrite(_motorPin1, bitRead(_lookup[out], 0));
-      digitalWrite(_motorPin2, bitRead(_lookup[out], 1));
-      digitalWrite(_motorPin3, bitRead(_lookup[out], 2));
-      digitalWrite(_motorPin4, bitRead(_lookup[out], 3));
+      digitalWrite(_motorPin1, bitRead(_step[out], 0));
+      digitalWrite(_motorPin2, bitRead(_step[out], 1));
+      digitalWrite(_motorPin3, bitRead(_step[out], 2));
+      digitalWrite(_motorPin4, bitRead(_step[out], 3));
     }
