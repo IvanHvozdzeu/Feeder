@@ -3,9 +3,11 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <DS3231.h>
+#include <DHT11.h>
 
-int buttonPin1 = 6;
-int buttonPin2 = 7;
+////////////////// Обозначение
+uint8_t buttonPin1 = 6;
+uint8_t buttonPin2 = 7;
 
 uint8_t hour[2];
 uint8_t min[2];
@@ -14,7 +16,9 @@ GButton button1(buttonPin1);
 GButton button2(buttonPin2);
 LiquidCrystal_I2C lcd(0x27,16,2);
 DS3231 RTC;
-bool h12Flag = false;
+DHT11 dht11(4);
+
+bool h12Flag;
 bool pmFlag;
 bool setTimeFlag;
 
@@ -25,31 +29,46 @@ void setup()
  lcd.init();
  lcd.clear();
  Serial.begin (9600);
+ pinMode(3,HIGH);
+ pinMode(4,INPUT);
+ pinMode(5,LOW);
  pinMode(6,INPUT);
  pinMode(7,INPUT);
  lcd.backlight();
  setTimeFlag = 0;
-/*  lcd.backlight();
- lcd.setCursor(2,0);
- lcd.print("Hello, VAFLIA!");
- lcd.setCursor(2,1);
- lcd.print("I Love YOU!"); */
+ h12Flag = 0;
+ RTC.setClockMode(h12Flag);
 }
 void loop() {
+int temperature = 0;
+int humidity = 0;
+int result = dht11.readTemperatureHumidity(temperature, humidity);
+if (result == 0) 
+ {
+        Serial.print("Temperature: ");
+        Serial.print(temperature);
+        Serial.print(" °C\tHumidity: ");
+        Serial.print(humidity);
+        Serial.println(" %");
+ } 
+ else 
+ {
+        // Print error message based on the error code.
+        Serial.println(DHT11::getErrorString(result));
+ }
+
 timeInit();
 if(setTimeFlag == 0)
 {
   timeViev();
 }
-
 if(button2.clickType() == 4 && button1.clickType() == 4)
 {
  setTime();
-};
+}
 }
 
 /////////////////////////////////////////
-
 void timeViev()
 {
   lcd.setCursor(0,0);
@@ -62,7 +81,7 @@ void timeViev()
 	lcd.print(sec[0], DEC);
   lcd.print(sec[1], DEC);
 }
-
+//////////////////////////////////
 void resetTime()
 {
   bool timeStop = 1;
@@ -71,8 +90,9 @@ void resetTime()
   RTC.setHour(0);
   RTC.setMinute(0);
   RTC.setSecond(1);
-  };
+  }
 }
+////////////////////////////////
 void setTime()
 {
  uint8_t cursor = 0;
@@ -84,50 +104,86 @@ void setTime()
  lcd.print("00:00:00");
  lcd.setCursor(cursor, 0);
  lcd.blink();
- while(cursor < 8){
-  if(button2.clickType() == 1)
+ while(cursor < 8)
+ {
+  auto _clickType = button2.clickType();
+  if(_clickType == 1)
   {
-   if (cursor == 0)
+   switch(cursor)
    {
-    _hour[0]++;
-    if (_hour[0] > 2){_hour[0]=0;}
-    lcd.print(_hour[0]);
-    lcd.setCursor(cursor, 0);
-   }
-   if (cursor == 1)
-   {
-    lcd.setCursor(cursor, 0);
-    _hour[1]++;
-    if (_hour[1] > 9){_hour[0] = 0;}
-    if (_hour[1] > 4 && _hour[0] == 2){_hour[1]=0;}
-    lcd.print(_hour[1]);
-   }
-  };
-  if (button2.clickType() == 2)
-  {
+    case 0:
 
+     _hour[0]++;
+     if (_hour[0] > 2){_hour[0]=0;}
+     lcd.print(_hour[0]);
+     lcd.setCursor(cursor, 0);
+     break;
+    case 1:
+    
+     _hour[1]++;
+     if (_hour[1] > 9){_hour[1] = 0;}
+     if (_hour[1] > 4 && _hour[0] == 2){_hour[1]=0;}
+     lcd.print(_hour[1]);
+     lcd.setCursor(cursor, 0);
+     break;
+    
+    case 3 :
+    
+     _min[0]++;
+     if (_min[0] > 6){_min[0] = 0;}
+     lcd.print(_min[0]);
+     lcd.setCursor(cursor, 0);
+     break;
+    
+    case 4 :
+    
+      _min[1]++;
+      if (_min[1] > 9){_min[1] = 0;}
+      lcd.print(_min[1]);
+      lcd.setCursor(cursor, 0);
+      break;
+    
+    case 6 :
+    
+      _sec[0]++;
+      if (_sec[0] > 6){_sec[0] = 0;}
+      lcd.print(_sec[0]);
+      lcd.setCursor(cursor, 0);
+      break;
+    
+    case 7 :
+    
+      _sec[1]++;
+      if (_sec[1] > 9){_sec[1] = 0;}
+      lcd.print(_sec[1]);
+      lcd.setCursor(cursor, 0);
+      continue;
+   } 
+  } 
+  if (_clickType == 2)
+  {
     cursor++;
-    lcd.setCursor(cursor, 0);
-    lcd.blink();
-  };
-/*   if (button2.clickType() == 2)
+    if (cursor == 2 ||cursor == 5)
    {
-    lcd.noBlink();
-    cursor++;
-    Serial.println(cursor);
+     lcd.noBlink();
+     cursor++;
+   }
     lcd.setCursor(cursor, 0);
     lcd.blink();
-    Serial.println(cursor);
-   }; */
- };
+    Serial.print("отработал иф");
+  }
+ }
  lcd.noBlink();
  lcd.noCursor();
+ RTC.setHour(_hour[0]*10+_hour[1]);
+ RTC.setMinute(_min[0]*10+_min[1]);
+ RTC.setSecond(_sec[0]*10+_sec[1]);
  setTimeFlag = 0;
 }
-
+///////////////////////////////////////
 void timeInit()
 {
- hour[0] = RTC.getHour(h12Flag, pmFlag) / 10;
+hour[0] = RTC.getHour(h12Flag, pmFlag) / 10;
 hour[1] = RTC.getHour(h12Flag, pmFlag) % 10;
 min[0] = RTC.getMinute() / 10;
 min[1] = RTC.getMinute() % 10;
