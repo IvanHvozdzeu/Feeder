@@ -12,6 +12,11 @@ uint8_t buttonPin2 = 7;
 uint8_t hour[2];
 uint8_t min[2];
 uint8_t sec[2];
+bool CenturyBit = true;
+uint8_t day[2];
+uint8_t mon[2];
+uint8_t year[2];
+
 GButton button1(buttonPin1);
 GButton button2(buttonPin2);
 LiquidCrystal_I2C lcd(0x27,16,2);
@@ -58,7 +63,7 @@ if (result == 0)
         Serial.println(DHT11::getErrorString(result));
  }
 /////////////////////////////////////////////	
-dateInit()
+dateInit();
 timeInit();
 if(setTimeFlag == 0)
 {
@@ -192,6 +197,7 @@ void timeInit()
  sec[0] = RTC.getSecond() / 10;
  sec[1] = RTC.getSecond() % 10;
 }
+///////////////////////////////////////
 void dateInit()
 {
  day[0] = RTC.getDate() / 10;
