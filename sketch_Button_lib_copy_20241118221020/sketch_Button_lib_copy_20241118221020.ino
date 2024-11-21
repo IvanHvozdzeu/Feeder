@@ -5,27 +5,30 @@
 #include <DS3231.h>
 #include <DHT11.h>
 
-////////////////// Обозначение
-uint8_t buttonPin1 = 6;
-uint8_t buttonPin2 = 7;
+#define SHOW_TIMER 3000;
 
-uint8_t hour[2];
-uint8_t min[2];
-uint8_t sec[2];
-bool CenturyBit = true;
-uint8_t day[2];
-uint8_t mon[2];
-uint8_t year[2];
-
+////////////////// Объявление переменных для пинов
+uint8_t buttonPin1 = 6; //////// Кнопка 1
+uint8_t buttonPin2 = 7; //////// Кнопка 2
+/////////////////// Объявление массивов для даты и времени
+uint8_t hour[2], min[2], sec[2]; //////// Время в формате hh mm ss
+uint8_t f1_hour[2]{0,0}, f1_min[2]{0,0}, f1_sec[2]{0,0}; ///////// Время первой порции корма в формате hh mm ss
+uint8_t f2_hour[2]{0,0}, f2_min[2]{0,0}, f2_sec[2]{0,0}; ///////// Время второй порции корма в формате hh mm ss
+uint8_t day[2], mon[2], year[2]; ////////// Дата в формате dd mm yy
+uint8_t _clickType1, _clickType2;
+unsigned long _initTimer=0;
+//////////////// Объявление библиотечных функций
 GButton button1(buttonPin1);
 GButton button2(buttonPin2);
 LiquidCrystal_I2C lcd(0x27,16,2);
 DS3231 RTC;
 DHT11 dht11(4);
-
+/////////////// Объявление флагов
+bool CenturyBit = true;
 bool h12Flag;
 bool pmFlag;
-bool setTimeFlag;
+bool viewTimeFlag;
+bool extraViewTimeFlag;
 
 
 void setup() 
@@ -40,7 +43,8 @@ void setup()
  pinMode(6,INPUT);
  pinMode(7,INPUT);
  lcd.backlight();
- setTimeFlag = 0;
+ viewTimeFlag = 1;
+ extraViewTimeFlag = 0;
  h12Flag = 0;
  RTC.setClockMode(h12Flag);
 }
@@ -63,19 +67,69 @@ if (result == 0)
         Serial.println(DHT11::getErrorString(result));
  } */
 /////////////////////////////////////////////	
-dateInit();
-timeInit();
-if(setTimeFlag == 0)
-{
+ dateInit();
+ timeInit();
+ _clickType1 = button1.clickType();
+ _clickType2 = button2.clickType();
+ if(viewTimeFlag == 1)
+ {
+  if(extraViewTimeFlag==0){
   timeViev();
   dateViev();
-}
-if(button2.clickType() == 4 && button1.clickType() == 4)
-{
- setTime();
-}
-}
+  }
+  else{
+    if (millis() - _initTimer > 3000){
+      extraViewTimeFlag = 0;
+      lcd.clear();
+    }
 
+  }
+ }
+ if(_clickType2 == 4 && _clickType1 == 4)
+ {
+  setTime();
+ }
+ if(_clickType2 == 1)
+ {
+ // unsigned long _currenttimer = 0;
+  _initTimer = millis();
+  lcd.clear();
+  //viewTimeFlag = 0;
+  // if (millis() - _initTimer < 3000)
+  // {
+  feed1_TimeViev();
+  feed2_TimeViev();
+  extraViewTimeFlag=1;
+  // _currenttimer = millis();
+// }
+ }
+}
+/////////////////////////////////////////
+void feed1_TimeViev()
+{
+  lcd.setCursor(0,0);
+  lcd.print(f1_hour[0], DEC);
+  lcd.print(f1_hour[1], DEC);
+	lcd.print(":");
+	lcd.print(f1_min[0], DEC);
+  lcd.print(f1_min[1], DEC);
+	lcd.print(":");
+	lcd.print(f1_sec[0], DEC);
+  lcd.print(f1_sec[1], DEC);
+}
+/////////////////////////////////////////
+void feed2_TimeViev()
+{
+  lcd.setCursor(0,1);
+  lcd.print(f2_hour[0], DEC);
+  lcd.print(f2_hour[1], DEC);
+	lcd.print(":");
+	lcd.print(f2_min[0], DEC);
+  lcd.print(f2_min[1], DEC);
+	lcd.print(":");
+	lcd.print(f2_sec[0], DEC);
+  lcd.print(f2_sec[1], DEC);
+}
 /////////////////////////////////////////
 void timeViev()
 {
@@ -102,17 +156,6 @@ void dateViev()
 	lcd.print(year[0], DEC);
   lcd.print(year[1], DEC);
 }
-//////////////////////////////////
-void resetTime()
-{
-  bool timeStop = 1;
-  for(int i=0; i<1;i++)
-  {
-  RTC.setHour(0);
-  RTC.setMinute(0);
-  RTC.setSecond(1);
-  }
-}
 //////////////////////////////// Инициализация установки времени.
 void setTime()
 {
@@ -120,7 +163,7 @@ void setTime()
  uint8_t _hour[2]{0,0};
  uint8_t _min[2]{0,0};
  uint8_t _sec[2]{0,0};
- setTimeFlag = 1;
+ viewTimeFlag = 0;
  lcd.clear();
  lcd.print("00:00:00");
  lcd.setCursor(cursor, 0);
@@ -184,7 +227,6 @@ void setTime()
    }
     lcd.setCursor(cursor, 0);
     lcd.blink();
-    Serial.print("отработал иф");
   }
  }
  lcd.noBlink();
@@ -192,7 +234,7 @@ void setTime()
  RTC.setHour(_hour[0]*10+_hour[1]);
  RTC.setMinute(_min[0]*10+_min[1]);
  RTC.setSecond(_sec[0]*10+_sec[1]);
- setTimeFlag = 0;
+ viewTimeFlag = 1;
 }
 /////////////////////////////////////// Инициализация времени в формате 24h hh:mm:ss
 void timeInit()
