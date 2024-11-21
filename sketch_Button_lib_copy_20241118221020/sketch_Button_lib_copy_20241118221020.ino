@@ -40,6 +40,7 @@ void setup()
  RTC.setClockMode(h12Flag);
 }
 void loop() {
+//////////////////////////////////////////////DHT11 TEST	
 int temperature = 0;
 int humidity = 0;
 int result = dht11.readTemperatureHumidity(temperature, humidity);
@@ -56,7 +57,8 @@ if (result == 0)
         // Print error message based on the error code.
         Serial.println(DHT11::getErrorString(result));
  }
-
+/////////////////////////////////////////////	
+dateInit()
 timeInit();
 if(setTimeFlag == 0)
 {
@@ -157,7 +159,7 @@ void setTime()
       if (_sec[1] > 9){_sec[1] = 0;}
       lcd.print(_sec[1]);
       lcd.setCursor(cursor, 0);
-      continue;
+      break;
    } 
   } 
   if (_clickType == 2)
@@ -183,10 +185,19 @@ void setTime()
 ///////////////////////////////////////
 void timeInit()
 {
-hour[0] = RTC.getHour(h12Flag, pmFlag) / 10;
-hour[1] = RTC.getHour(h12Flag, pmFlag) % 10;
-min[0] = RTC.getMinute() / 10;
-min[1] = RTC.getMinute() % 10;
-sec[0] = RTC.getSecond() / 10;
-sec[1] = RTC.getSecond() % 10;
+ hour[0] = RTC.getHour(h12Flag, pmFlag) / 10;
+ hour[1] = RTC.getHour(h12Flag, pmFlag) % 10;
+ min[0] = RTC.getMinute() / 10;
+ min[1] = RTC.getMinute() % 10;
+ sec[0] = RTC.getSecond() / 10;
+ sec[1] = RTC.getSecond() % 10;
+}
+void dateInit()
+{
+ day[0] = RTC.getDate() / 10;
+ day[1] = RTC.getDate() % 10;
+ mon[0] = RTC.getMonth(CenturyBit) / 10;
+ mon[1] = RTC.getMonth(CenturyBit) % 10;
+ year[0] = RTC.getYear() / 10;
+ year[1] = RTC.getYear() % 10;
 }
