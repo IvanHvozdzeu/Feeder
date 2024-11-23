@@ -1,12 +1,14 @@
 #include "Arduino.h"
 #include "GButton.h"
 
+enum getClickType {NOCLICK, ONECLICK, DOUBLECLICK, TRIPLECLICK, HOLD};
+
 GButton::GButton(uint8_t pin)
 {
  _pin=pin;
 }
 ///////////////////////////// Флаг для одного клика или удержания
-uint8_t GButton::clickType()
+uint8_t GButton::getclickType()
 {
  switch(digitalRead(_pin))
  {
@@ -20,7 +22,7 @@ uint8_t GButton::clickType()
     }
     _holdFlag = false;
     _timerFlag = true;
-    return 0;
+    return NOCLICK;
    }
    if(_pressFlag && _holdFlag) /// Нажатие на кнопку с удержанием 0,05 сек
    {
@@ -37,29 +39,29 @@ uint8_t GButton::clickType()
     switch(_clickCount)
     {
       case 0:
-      return 0;
+      return NOCLICK;
       break;
       case 1:
-      //Serial.println("Нажатие");
+      Serial.println("Нажатие");
       _clickCount = 0;
-      return 1;
+      return ONECLICK;
       break;
       case 2:
-      //Serial.println("Двойное нажатие");
+      Serial.println("Двойное нажатие");
       _clickCount = 0;
-      return 2;
+      return DOUBLECLICK;
       break;
       case 3:
-      //Serial.println("Тройное нажатие");
+      Serial.println("Тройное нажатие");
       _clickCount = 0;
-      return 3;
+      return TRIPLECLICK;
       break;
     }
     _clickCount = 0;
    }
    else /// Отсутствие нажатия
    {
-    return 0;
+    return NOCLICK;
    }
    break;
   case 1:
@@ -71,7 +73,7 @@ uint8_t GButton::clickType()
    }
    if(_holdFlag && millis() - _btnTimer > 1000 ) /// Удержание кнопки более 0,5 сек.
    {
-    //Serial.println("Удержание");
+    Serial.println("Удержание");
     if(_timerFlag) /// Удержание кнопки более 0,5 сек.
     {
     _timerFlag = false;
