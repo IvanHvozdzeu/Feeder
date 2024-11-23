@@ -15,7 +15,7 @@ uint8_t realTime[6]{0,0,0,0,0,0};//////////// Реальное время в ф�
 uint8_t feedTime_1[6]{0,0,0,0,0,0}; ///////// Время первой порции корма в формате hh mm ss
 uint8_t feedTime_2[6]{0,0,0,0,0,0}; ///////// Время второй порции корма в формате hh mm ss
 uint8_t day[2], mon[2], year[2]; ////////// Дата в формате dd mm yy
-uint8_t _clickType1, _clickType2;
+uint8_t getClickType1, getClickType2;
 unsigned long _initTimer=0;
 //////////////// Объявление библиотечных функций
 GButton button1(buttonPin_1);
@@ -51,8 +51,8 @@ void loop() {
 
  dateInit();
  timeInit();
- _clickType1 = button1.getclickType();
- _clickType2 = button2.getclickType();
+ getClickType1 = button1.getclickType();
+ getClickType2 = button2.getclickType();
  if(viewTimeFlag == 1)
  {
   if(extraViewTimeFlag==0){
@@ -67,11 +67,12 @@ void loop() {
 
   }
  }
- if(_clickType2 == HOLD && _clickType1 == HOLD)
+ if(getClickType2 == HOLD)
  {
+  Serial.println("Включилась настройка времени");
   setTime();
  }
- if(_clickType2 == ONE_CLICK)
+ if(getClickType2 == ONE_CLICK)
  {
  // unsigned long _currenttimer = 0;
   _initTimer = millis();
