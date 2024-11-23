@@ -82,7 +82,7 @@ uint8_t GButton::getclickType()
     _btnTimer = millis();
     _pressFlag = false;
      _clickCount = 0;
-    return 4;
+    return HOLD;
    }
    if(_timerFlag) /// Удержание кнопки более 0,5 сек.
    {
