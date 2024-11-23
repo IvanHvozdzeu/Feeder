@@ -6,23 +6,22 @@
 #include <DHT11.h>
 
 #define SHOW_TIMER 3000;
-
+enum clickType {NO_CLICK, ONE_CLICK, DOUBLE_CLICK, TRIPLE_CLICK, HOLD};
 ////////////////// Объявление переменных для пинов
-uint8_t buttonPin1 = 6; //////// Кнопка 1
-uint8_t buttonPin2 = 7; //////// Кнопка 2
+uint8_t buttonPin_1 = 6; //////// Кнопка 1
+uint8_t buttonPin_2 = 7; //////// Кнопка 2
 /////////////////// Объявление массивов для даты и времени
-uint8_t hour[2], min[2], sec[2]; //////// Время в формате hh mm ss
-uint8_t f1_hour[2]{0,0}, f1_min[2]{0,0}, f1_sec[2]{0,0}; ///////// Время первой порции корма в формате hh mm ss
-uint8_t f2_hour[2]{0,0}, f2_min[2]{0,0}, f2_sec[2]{0,0}; ///////// Время второй порции корма в формате hh mm ss
+uint8_t realTime[6]{0,0,0,0,0,0};//////////// Реальное время в формате hh mm ss
+uint8_t feedTime_1[6]{0,0,0,0,0,0}; ///////// Время первой порции корма в формате hh mm ss
+uint8_t feedTime_2[6]{0,0,0,0,0,0}; ///////// Время второй порции корма в формате hh mm ss
 uint8_t day[2], mon[2], year[2]; ////////// Дата в формате dd mm yy
 uint8_t _clickType1, _clickType2;
 unsigned long _initTimer=0;
 //////////////// Объявление библиотечных функций
-GButton button1(buttonPin1);
-GButton button2(buttonPin2);
+GButton button1(buttonPin_1);
+GButton button2(buttonPin_2);
 LiquidCrystal_I2C lcd(0x27,16,2);
 DS3231 RTC;
-DHT11 dht11(4);
 /////////////// Объявление флагов
 bool CenturyBit = true;
 bool h12Flag;
@@ -49,28 +48,11 @@ void setup()
  RTC.setClockMode(h12Flag);
 }
 void loop() {
-//////////////////////////////////////////////DHT11 TEST	
-/* int temperature = 0;
-int humidity = 0;
-int result = dht11.readTemperatureHumidity(temperature, humidity);
-if (result == 0) 
- {
-        Serial.print("Temperature: ");
-        Serial.print(temperature);
-        Serial.print(" °C\tHumidity: ");
-        Serial.print(humidity);
-        Serial.println(" %");
- } 
- else 
- {
-        // Print error message based on the error code.
-        Serial.println(DHT11::getErrorString(result));
- } */
-/////////////////////////////////////////////	
+
  dateInit();
  timeInit();
- _clickType1 = button1.clickType();
- _clickType2 = button2.clickType();
+ _clickType1 = button1.getclickType();
+ _clickType2 = button2.getclickType();
  if(viewTimeFlag == 1)
  {
   if(extraViewTimeFlag==0){
@@ -85,11 +67,11 @@ if (result == 0)
 
   }
  }
- if(_clickType2 == 4 && _clickType1 == 4)
+ if(_clickType2 == HOLD && _clickType1 == HOLD)
  {
   setTime();
  }
- if(_clickType2 == 1)
+ if(_clickType2 == ONE_CLICK)
  {
  // unsigned long _currenttimer = 0;
   _initTimer = millis();
@@ -108,40 +90,40 @@ if (result == 0)
 void feed1_TimeViev()
 {
   lcd.setCursor(0,0);
-  lcd.print(f1_hour[0], DEC);
-  lcd.print(f1_hour[1], DEC);
+  lcd.print(feedTime_1[0], DEC);
+  lcd.print(feedTime_1[1], DEC);
 	lcd.print(":");
-	lcd.print(f1_min[0], DEC);
-  lcd.print(f1_min[1], DEC);
+	lcd.print(feedTime_1[2], DEC);
+  lcd.print(feedTime_1[3], DEC);
 	lcd.print(":");
-	lcd.print(f1_sec[0], DEC);
-  lcd.print(f1_sec[1], DEC);
+	lcd.print(feedTime_1[4], DEC);
+  lcd.print(feedTime_1[5], DEC);
 }
 /////////////////////////////////////////
 void feed2_TimeViev()
 {
   lcd.setCursor(0,1);
-  lcd.print(f2_hour[0], DEC);
-  lcd.print(f2_hour[1], DEC);
+  lcd.print(feedTime_2[0], DEC);
+  lcd.print(feedTime_2[1], DEC);
 	lcd.print(":");
-	lcd.print(f2_min[0], DEC);
-  lcd.print(f2_min[1], DEC);
+	lcd.print(feedTime_2[2], DEC);
+  lcd.print(feedTime_2[3], DEC);
 	lcd.print(":");
-	lcd.print(f2_sec[0], DEC);
-  lcd.print(f2_sec[1], DEC);
+	lcd.print(feedTime_2[4], DEC);
+  lcd.print(feedTime_2[5], DEC);
 }
 /////////////////////////////////////////
 void timeViev()
 {
   lcd.setCursor(0,0);
-  lcd.print(hour[0], DEC);
-  lcd.print(hour[1], DEC);
+  lcd.print(realTime[0], DEC);
+  lcd.print(realTime[1], DEC);
 	lcd.print(":");
-	lcd.print(min[0], DEC);
-  lcd.print(min[1], DEC);
+	lcd.print(realTime[2], DEC);
+  lcd.print(realTime[3], DEC);
 	lcd.print(":");
-	lcd.print(sec[0], DEC);
-  lcd.print(sec[1], DEC);
+	lcd.print(realTime[4], DEC);
+  lcd.print(realTime[5], DEC);
 }
 //////////////////////////////////
 void dateViev()
@@ -160,9 +142,7 @@ void dateViev()
 void setTime()
 {
  uint8_t cursor = 0;
- uint8_t _hour[2]{0,0};
- uint8_t _min[2]{0,0};
- uint8_t _sec[2]{0,0};
+ uint8_t _time[6]{0,0,0,0,0,0};
  viewTimeFlag = 0;
  lcd.clear();
  lcd.print("00:00:00");
@@ -170,49 +150,49 @@ void setTime()
  lcd.blink();
  while(cursor < 8)
  {
-  auto _clickType = button2.clickType();
+  auto _clickType = button2.getclickType();
   if(_clickType == 1)
   {
    switch(cursor)
    {
     case 0:
 
-     _hour[0] = (_hour[0] + 1) % 3;
-     lcd.print(_hour[0]);
+     _time[0] = (_time[0] + 1) % 3;
+     lcd.print(_time[0]);
      lcd.setCursor(cursor, 0);
      break;
     case 1:
     
-     _hour[1] = (_hour[1] + 1) % (_hour[0] == 2 ? 4 : 10);
-     lcd.print(_hour[1]);
+     _time[1] = (_time[1] + 1) % (_time[0] == 2 ? 4 : 10);
+     lcd.print(_time[1]);
      lcd.setCursor(cursor, 0);
      break;
     
     case 3 :
     
-     _min[0] = (_min[0] + 1) % 6;
-     lcd.print(_min[0]);
+     _time[2] = (_time[2] + 1) % 6;
+     lcd.print(_time[2]);
      lcd.setCursor(cursor, 0);
      break;
     
     case 4 :
     
-      _min[1] = (_min[1] + 1) % 10;
-      lcd.print(_min[1]);
+      _time[3] = (_time[3] + 1) % 10;
+      lcd.print(_time[3]);
       lcd.setCursor(cursor, 0);
       break;
     
     case 6 :
     
-      _sec[0] = (_sec[0] + 1) % 6;
-      lcd.print(_sec[0]);
+      _time[4] = (_time[4] + 1) % 6;
+      lcd.print(_time[4]);
       lcd.setCursor(cursor, 0);
       break;
     
     case 7 :
     
-      _sec[1] = (_sec[1] + 1) % 10;
-      lcd.print(_sec[1]);
+      _time[5] = (_time[5] + 1) % 10;
+      lcd.print(_time[5]);
       lcd.setCursor(cursor, 0);
       break;
    } 
@@ -231,20 +211,20 @@ void setTime()
  }
  lcd.noBlink();
  lcd.noCursor();
- RTC.setHour(_hour[0]*10+_hour[1]);
- RTC.setMinute(_min[0]*10+_min[1]);
- RTC.setSecond(_sec[0]*10+_sec[1]);
+ RTC.setHour(_time[0]*10+_time[1]);
+ RTC.setMinute(_time[2]*10+_time[3]);
+ RTC.setSecond(_time[4]*10+_time[5]);
  viewTimeFlag = 1;
 }
 /////////////////////////////////////// Инициализация времени в формате 24h hh:mm:ss
 void timeInit()
 {
- hour[0] = RTC.getHour(h12Flag, pmFlag) / 10;
- hour[1] = RTC.getHour(h12Flag, pmFlag) % 10;
- min[0] = RTC.getMinute() / 10;
- min[1] = RTC.getMinute() % 10;
- sec[0] = RTC.getSecond() / 10;
- sec[1] = RTC.getSecond() % 10;
+ realTime[0] = RTC.getHour(h12Flag, pmFlag) / 10;
+ realTime[1] = RTC.getHour(h12Flag, pmFlag) % 10;
+ realTime[2] = RTC.getMinute() / 10;
+ realTime[3] = RTC.getMinute() % 10;
+ realTime[4] = RTC.getSecond() / 10;
+ realTime[5] = RTC.getSecond() % 10;
 }
 /////////////////////////////////////// инициализация даты в формате dd/mm/yy
 void dateInit()
