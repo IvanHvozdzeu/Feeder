@@ -11,10 +11,11 @@ enum clickType {NO_CLICK, ONE_CLICK, DOUBLE_CLICK, TRIPLE_CLICK, HOLD};
 uint8_t buttonPin_1 = 6; //////// Кнопка 1
 uint8_t buttonPin_2 = 7; //////// Кнопка 2
 /////////////////// Объявление массивов для даты и времени
+uint8_t _time[6]{0,0,0,0,0,0};
 uint8_t realTime[6]{0,0,0,0,0,0};//////////// Реальное время в формате hh mm ss
 uint8_t feedTime_1[6]{0,0,0,0,0,0}; ///////// Время первой порции корма в формате hh mm ss
 uint8_t feedTime_2[6]{0,0,0,0,0,0}; ///////// Время второй порции корма в формате hh mm ss
-uint8_t day[2], mon[2], year[2]; ////////// Дата в формате dd mm yy
+uint8_t date[6]; ////////// Дата в формате dd mm yy
 uint8_t getClickType1, getClickType2;
 unsigned long _initTimer=0;
 //////////////// Объявление библиотечных функций
@@ -70,7 +71,7 @@ void loop() {
  if(getClickType2 == HOLD)
  {
   Serial.println("Включилась настройка времени");
-  setTime();
+  setRealTime();
  }
  if(getClickType2 == ONE_CLICK)
  {
@@ -86,6 +87,10 @@ void loop() {
   // _currenttimer = millis();
 // }
  }
+ if(getClickType2==TRIPLE_CLICK)
+ {
+ setFeedTime_1();
+ }
 }
 /////////////////////////////////////////
 void feed1_TimeViev()
@@ -100,7 +105,7 @@ void feed1_TimeViev()
 	lcd.print(feedTime_1[4], DEC);
   lcd.print(feedTime_1[5], DEC);
 }
-/////////////////////////////////////////
+///////////////////////////////////////// Время втоой кормёжки
 void feed2_TimeViev()
 {
   lcd.setCursor(0,1);
@@ -113,7 +118,7 @@ void feed2_TimeViev()
 	lcd.print(feedTime_2[4], DEC);
   lcd.print(feedTime_2[5], DEC);
 }
-/////////////////////////////////////////
+///////////////////////////////////////// Состояние экрана - показ времени в левой верхней строке
 void timeViev()
 {
   lcd.setCursor(0,0);
@@ -130,20 +135,25 @@ void timeViev()
 void dateViev()
 {
   lcd.setCursor(8,1);
-  lcd.print(day[0], DEC);
-  lcd.print(day[1], DEC);
+  lcd.print(date[0], DEC);
+  lcd.print(date[1], DEC);
 	lcd.print("/");
-	lcd.print(mon[0], DEC);
-  lcd.print(mon[1], DEC);
+	lcd.print(date[2], DEC);
+  lcd.print(date[3], DEC);
 	lcd.print("/");
-	lcd.print(year[0], DEC);
-  lcd.print(year[1], DEC);
+	lcd.print(date[4], DEC);
+  lcd.print(date[5], DEC);
 }
-//////////////////////////////// Инициализация установки времени.
+//////////////////////////////// Инициализация установки времени для чего либо. 
+//////////////////////////////// Пользователь вписывает с помощью кнопок в существующий массив _time 6 значений типа uint8_t hh:mm:ss
+//////////////////////////////// После этого метода должен вызываться метод присвоения значений массива _time в масив, который хотим изменить (например, время корма 1)
 void setTime()
 {
  uint8_t cursor = 0;
- uint8_t _time[6]{0,0,0,0,0,0};
+ for (uint8_t i=0;i<6;i++)
+ {
+  _time[i]=0;
+ }
  viewTimeFlag = 0;
  lcd.clear();
  lcd.print("00:00:00");
@@ -212,9 +222,6 @@ void setTime()
  }
  lcd.noBlink();
  lcd.noCursor();
- RTC.setHour(_time[0]*10+_time[1]);
- RTC.setMinute(_time[2]*10+_time[3]);
- RTC.setSecond(_time[4]*10+_time[5]);
  viewTimeFlag = 1;
 }
 /////////////////////////////////////// Инициализация времени в формате 24h hh:mm:ss
@@ -230,10 +237,27 @@ void timeInit()
 /////////////////////////////////////// инициализация даты в формате dd/mm/yy
 void dateInit()
 {
- day[0] = RTC.getDate() / 10;
- day[1] = RTC.getDate() % 10;
- mon[0] = RTC.getMonth(CenturyBit) / 10;
- mon[1] = RTC.getMonth(CenturyBit) % 10;
- year[0] = RTC.getYear() / 10;
- year[1] = RTC.getYear() % 10;
+ date[0] = RTC.getDate() / 10;
+ date[1] = RTC.getDate() % 10;
+ date[2] = RTC.getMonth(CenturyBit) / 10;
+ date[3] = RTC.getMonth(CenturyBit) % 10;
+ date[4] = RTC.getYear() / 10;
+ date[5] = RTC.getYear() % 10;
+}
+//////////////////////////////////// Установка реального времени. Массив из метода setTime передаёт значения в метод библиотеки DS3231 RTC.setHour и.т.п. 
+void setRealTime()
+{
+ setTime(); 
+ RTC.setHour(_time[0]*10+_time[1]);
+ RTC.setMinute(_time[2]*10+_time[3]);
+ RTC.setSecond(_time[4]*10+_time[5]);
+}
+///////////////////////////////////
+void setFeedTime_1()
+{
+ setTime(); 
+ for (uint8_t i=0;i<6;i++)
+ {
+  feedTime_1[i]=_time[i];
+ }
 }
