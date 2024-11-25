@@ -8,6 +8,7 @@
 #define SHOW_TIMER 3000
 #define PIN_BUTTON_1 6//////// Кнопка 1
 #define PIN_BUTTON_2 7//////// Кнопка 2 
+#define HIGH_PIN_STEPPER 13
 /////////////////////////////////
 enum  lcdCurrentState
 {
@@ -45,12 +46,17 @@ void setup()
  lcd.init();
  lcd.clear();
  Serial.begin (9600);
- pinMode(6,INPUT);
- pinMode(7,INPUT);
+ pinMode(PIN_BUTTON_2,INPUT);
+ pinMode(PIN_BUTTON_1,INPUT);
+ pinMode(HIGH_PIN_STEPPER,OUTPUT);
  lcd.backlight();
  h12Flag = 0;
  RTC.setClockMode(h12Flag);
  lcdCurrentState = lcdIdle;
+ digitalWrite(13, HIGH);
+ ////////
+ pinMode(8,OUTPUT);
+ digitalWrite(8, HIGH);
 }
 /////////////////////////////////////////
 void loop() {
@@ -62,13 +68,19 @@ void loop() {
  /////////////////////////////////////////// Машина состояний для LCD дисплея кормушки
  switch(lcdCurrentState)
  {
+  ///////////////////////////////////// СОСТОЯНИЕ Покой
   case lcdIdle:
-   if (_button1ClckType == HOLD)
+   if (_button1ClckType == HOLD) ///////////////////////////////////// Переход в состояние Установить время
    {
     lcdCurrentState = lcdSetTime;
     break;
    }
-   if (_button1ClckType == ONECLICK)
+   if (_button1ClckType == DOUBLECLICK) ///////////////////////////////////// Переход в состояние Установить дату
+   {
+    lcdCurrentState = lcdSetDate;
+    break;
+   }
+   if (_button1ClckType == ONECLICK) ///////////////////////////////////// Переход в состояние Показать Таймеры
    {
     lcdCurrentState = lcdShowTimers; 
     _initTimer = currentMillis;
@@ -79,18 +91,18 @@ void loop() {
    lcdCurrentTimeView();
    lcdCurrentDateView();
    break; 
-////////////////////////////////
+/////////////////////////////////////   СОСТОЯНИЕ Установка времени
   case lcdSetTime:
+  Serial.println("current lcd state is SET TIME");
   setRealTime();
   lcdCurrentState = lcdIdle;
-  Serial.println("current lcd state is SET TIME");
   break;
-////////////////////////////////
+///////////////////////////////////// СОСТОЯНИЕ Установка даты
   case lcdSetDate:
   Serial.println("current lcd state is SET DATE");
   lcdCurrentState = lcdIdle;
   break;
-////////////////////////////////
+///////////////////////////////////// СОСТОЯНИЕ Показать таймеры
   case lcdShowTimers:
   Serial.println("current lcd state is SHOW TIMERS");
   feed1_TimeViev();
@@ -107,11 +119,12 @@ void loop() {
    lcdCurrentState = lcdIdle;
   }
   break;
-////////////////////////////////
+///////////////////////////////////// СОСТОЯНИЕ Установить таймеры
   case lcdSetFeedTimers:
   Serial.println("current lcd state is SET FEED TIMERS");
   setFeedTimers();
   lcdCurrentState = lcdIdle;
+  break;
  }
 }
 
@@ -172,7 +185,7 @@ void setTime()
 {
  for(uint8_t i = 0; i < 6; i++)
  {
-    setTimeArray[i]=0;
+    setTimeArray[i] = 0;
  }
  uint8_t cursor = 0;
  lcd.clear();
@@ -233,11 +246,12 @@ void setTime()
     cursor++;
     if (cursor == 2 ||cursor == 5)
    {
-     lcd.noBlink();
+     //lcd.noBlink();
      cursor++;
    }
     lcd.setCursor(cursor, 0);
     lcd.blink();
+    continue;
   }
  }
  lcd.noBlink();
@@ -267,10 +281,9 @@ void dateInit()
 void setRealTime()
 {
   setTime();
-  for(uint8_t i = 0; i < 6; i++)
-  {
-    setTimeArray[i]=currentRtcTime[i];
-  }
+  RTC.setHour(setTimeArray[0]*10+setTimeArray[1]);
+  RTC.setMinute(setTimeArray[2]*10+setTimeArray[3]);
+  RTC.setSecond(setTimeArray[4]*10+setTimeArray[5]);
 }
 ///////////////////////////////////////
 void setFeedTimers()
@@ -285,4 +298,8 @@ void setFeedTimers()
   {
     currentFeedTime_2[i]=setTimeArray[i];
   }
+}
+//////////////////////////////////////
+void setDate()
+{
 }
