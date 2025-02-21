@@ -300,6 +300,95 @@ void setFeedTimers()
   }
 }
 //////////////////////////////////////
+/////////////////////////////////////// Установка даты в формате yy/mm/dd
 void setDate()
 {
+  // Массив для хранения вводимой даты: [yy1, yy2, mm1, mm2, dd1, dd2]
+  uint8_t setDateArray[6] = {0, 0, 0, 0, 0, 0};
+  // Массив максимального количества дней в каждом месяце (янв-дек)
+  const uint8_t daysInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  
+  uint8_t cursor = 0; // Позиция курсора на экране
+  lcd.clear();
+  lcd.print("00/00/00"); // Начальный шаблон в формате yy/mm/dd
+  lcd.setCursor(cursor, 0);
+  lcd.blink();
+
+  while (cursor < 8)
+  {
+    auto _clickType = button1.getClickType();
+
+    if (_clickType == ONECLICK)
+    {
+      switch (cursor)
+      {
+        case 0: // Десятки лет
+          setDateArray[0] = (setDateArray[0] + 1) % 10; // 00-99
+          lcd.print(setDateArray[0]);
+          lcd.setCursor(cursor, 0);
+          break;
+
+        case 1: // Единицы лет
+          setDateArray[1] = (setDateArray[1] + 1) % 10;
+          lcd.print(setDateArray[1]);
+          lcd.setCursor(cursor, 0);
+          break;
+
+        case 3: // Десятки месяцев
+          setDateArray[2] = (setDateArray[2] + 1) % 2; // 01-12
+          lcd.print(setDateArray[2]);
+          lcd.setCursor(cursor, 0);
+          break;
+
+        case 4: // Единицы месяцев
+          setDateArray[3] = (setDateArray[3] + 1) % ((setDateArray[2] == 1) ? 3 : 10);
+          lcd.print(setDateArray[3]);
+          lcd.setCursor(cursor, 0);
+          break;
+
+        case 6: // Десятки дней
+          uint8_t month = setDateArray[2] * 10 + setDateArray[3];
+          uint8_t year = setDateArray[0] * 10 + setDateArray[1];
+          uint8_t maxDays = (month == 0) ? 31 : daysInMonth[month - 1];
+          if (month == 2 && isLeapYear(year)) maxDays = 29;
+          setDateArray[4] = (setDateArray[4] + 1) % ((maxDays < 30) ? 3 : 4);
+          lcd.print(setDateArray[4]);
+          lcd.setCursor(cursor, 0);
+          break;
+
+        case 7: // Единицы дней
+          month = setDateArray[2] * 10 + setDateArray[3];
+          year = setDateArray[0] * 10 + setDateArray[1];
+          maxDays = (month == 0) ? 31 : daysInMonth[month - 1];
+          if (month == 2 && isLeapYear(year)) maxDays = 29;
+          setDateArray[5] = (setDateArray[5] + 1) % ((setDateArray[4] == maxDays / 10) ? (maxDays % 10 + 1) : 10);
+          lcd.print(setDateArray[5]);
+          lcd.setCursor(cursor, 0);
+          break;
+      }
+    }
+
+    if (_clickType == DOUBLECLICK)
+    {
+      cursor++;
+      if (cursor == 2 || cursor == 5) cursor++; // Пропускаем слэши
+      lcd.setCursor(cursor, 0);
+      lcd.blink();
+    }
+  }
+
+  lcd.noBlink();
+  lcd.noCursor();
+
+  // Устанавливаем дату в RTC
+  RTC.setYear(setDateArray[0] * 10 + setDateArray[1]);
+  RTC.setMonth(setDateArray[2] * 10 + setDateArray[3]);
+  RTC.setDate(setDateArray[4] * 10 + setDateArray[5]);
+}
+
+// Проверка високосного года
+bool isLeapYear(uint8_t year)
+{
+  year += 2000; // Предполагаем, что год в формате 00-99 относится к 2000-м
+  return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 }
