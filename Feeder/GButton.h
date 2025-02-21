@@ -1,23 +1,28 @@
-#pragma once
+#ifndef GBUTTON_H
+#define GBUTTON_H
 
 #include "Arduino.h"
 
-class GButton
-{
-  public:
-   GButton (uint8_t pin);
-   uint8_t getclickType(); ///// 1-click, 2-double, 3-triple, 4-hold
-   unsigned long holdTimer;
+// Константы для таймингов (в миллисекундах)
+#define DEBOUNCE_DELAY 50    // Задержка для подавления дребезга
+#define CLICK_TIMEOUT 200    // Максимальный интервал между кликами для их подсчёта
+#define HOLD_TIMEOUT 1000    // Время, после которого считается удержание
 
+enum getClickType {NOCLICK, ONECLICK, DOUBLECLICK, TRIPLECLICK, HOLD};
 
-  private:
-   uint8_t _clickCount;
-   uint8_t _pin;
-   bool _holdFlag;
-   bool _pressFlag;
-   unsigned long _btnTimer;
-   bool _timerFlag;
-   unsigned long _holdTimer;
+class GButton {
+private:
+  uint8_t _pin;
+  unsigned long _btnTimer;
+  unsigned long _holdTimer;
+  bool _pressFlag;
+  bool _holdFlag;
+  bool _timerFlag;
+  uint8_t _clickCount;
+
+public:
+  GButton(uint8_t pin);
+  uint8_t getClickType();
 };
 
-
+#endif
