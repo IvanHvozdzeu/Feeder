@@ -13,7 +13,7 @@ uint8_t GButton::getClickType() {
       if (!_pressFlag && _holdFlag && millis() - _btnTimer > 50) { // Сброс флагов после отпускания
         _btnTimer = millis();
         if (millis() - _holdTimer > 500) { // Если прошло больше 500 мс после удержания
-          _holdTimer = millis() - _holdTimer;
+          holdTimer = millis() - _holdTimer;
         }
         _holdFlag = false;
         _timerFlag = true;
