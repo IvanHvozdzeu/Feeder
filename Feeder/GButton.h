@@ -15,6 +15,7 @@ private:
   uint8_t _pin;
   unsigned long _btnTimer;
   unsigned long _holdTimer;
+  unsigned long holdTimer;
   bool _pressFlag;
   bool _holdFlag;
   bool _timerFlag;
