@@ -1,94 +1,52 @@
 #include "Arduino.h"
 #include "GButton.h"
 
-enum getClickType {NOCLICK, ONECLICK, DOUBLECLICK, TRIPLECLICK, HOLD};
-
-GButton::GButton(uint8_t pin)
-{
- _pin=pin;
+GButton::GButton(uint8_t pin) {
+  _pin = pin;
+  pinMode(_pin, INPUT); // Настраиваем пин как вход
+  _btnTimer = 0;
+  _holdTimer = 0;
+  _pressFlag = false;
+  _holdFlag = false;
+  _timerFlag = false;
+  _clickCount = 0;
 }
-///////////////////////////// Флаг для одного клика или удержания
-uint8_t GButton::getclickType()
-{
- switch(digitalRead(_pin))
- {
-  case 0:
-   if(!_pressFlag && _holdFlag && millis() - _btnTimer > 50 ) /// Сброс флагов
-   {
+
+uint8_t GButton::getClickType() {
+  if (millis() - _btnTimer < DEBOUNCE_DELAY) return NOCLICK; // Игнорируем дребезг
+
+  bool state = digitalRead(_pin);
+  if (state == HIGH && !_holdFlag) { // Нажатие началось
     _btnTimer = millis();
-    if(millis()-_holdTimer>500)
-    {
-    holdTimer = millis()-_holdTimer;
-    }
-    _holdFlag = false;
-    _timerFlag = true;
-    return NOCLICK;
-   }
-   if(_pressFlag && _holdFlag) /// Нажатие на кнопку с удержанием 0,05 сек
-   {
-    _btnTimer = millis();
+    _holdFlag = true;
+    _pressFlag = true;
+  }
+  else if (state == LOW && _pressFlag) { // Кнопка отпущена
     _pressFlag = false;
-    _clickCount ++;
-   }
-   if (millis() - _btnTimer > 200)
-   {
-    if (_clickCount > 3)
-    {
-      _clickCount = 3;
+    if (millis() - _btnTimer < CLICK_TIMEOUT) { // Короткое нажатие
+      _clickCount++;
+      _btnTimer = millis();
     }
-    switch(_clickCount)
-    {
-      case 0:
-      return NOCLICK;
-      break;
-      case 1:
-      Serial.println("Нажатие");
-      _clickCount = 0;
-      return ONECLICK;
-      break;
-      case 2:
-      Serial.println("Двойное нажатие");
-      _clickCount = 0;
-      return DOUBLECLICK;
-      break;
-      case 3:
-      Serial.println("Тройное нажатие");
-      _clickCount = 0;
-      return TRIPLECLICK;
-      break;
+  }
+
+  if (_holdFlag && state == HIGH && millis() - _btnTimer > HOLD_TIMEOUT) { // Удержание
+    Serial.println("Удержание");
+    _holdFlag = false;
+    _clickCount = 0;
+    _btnTimer = millis();
+    return HOLD;
+  }
+
+  if (_clickCount > 0 && millis() - _btnTimer > CLICK_TIMEOUT) { // Проверяем клики
+    uint8_t result = NOCLICK;
+    switch (_clickCount) {
+      case 1: Serial.println("Нажатие"); result = ONECLICK; break;
+      case 2: Serial.println("Двойное нажатие"); result = DOUBLECLICK; break;
+      case 3: Serial.println("Тройное нажатие"); result = TRIPLECLICK; break;
     }
     _clickCount = 0;
-   }
-   else /// Отсутствие нажатия
-   {
-    return NOCLICK;
-   }
-   break;
-  case 1:
-   if(!_holdFlag && millis() - _btnTimer > 50 ) /// Регистрация нажатия. Ничего не возвращает т.к. функция ждёт будет ли удержание или просто нажатие
-   {
-    _btnTimer = millis();
-    _holdFlag = true; /// флаг удержания
-    _pressFlag = true; /// флаг нажатия
-   }
-   if(_holdFlag && millis() - _btnTimer > 1000 ) /// Удержание кнопки более 0,5 сек.
-   {
-    Serial.println("Удержание");
-    if(_timerFlag) /// Удержание кнопки более 0,5 сек.
-    {
-    _timerFlag = false;
-    _holdTimer = millis();
-    }
-    _btnTimer = millis();
-    _pressFlag = false;
-     _clickCount = 0;
-    return HOLD;
-   }
-   if(_timerFlag)
-   {
-    _timerFlag = false;
-    _holdTimer = millis();
-   }
- }
+    return result;
+  }
+
+  return NOCLICK;
 }
-////////////////////////////
